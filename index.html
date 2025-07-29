@@ -21,17 +21,15 @@
             width: 100%;
             height: 100%;
             z-index: -1; /* Place it behind all content */
-            opacity: 0.4; /* Increased opacity for better visibility */
+            opacity: 0.4;
         }
 
-        /* --- Neon Title Effect (Updated) --- */
+        /* --- Neon Title Effect --- */
         @keyframes pulse-neon {
             0%, 100% {
-                /* More subtle base glow */
                 text-shadow: 0 0 2px #fff, 0 0 6px #60a5fa, 0 0 12px #60a5fa;
             }
             50% {
-                /* More subtle pulsing glow */
                 text-shadow: 0 0 4px #fff, 0 0 10px #93c5fd, 0 0 18px #93c5fd;
             }
         }
@@ -43,7 +41,7 @@
 
         /* --- Admin/View Mode Styles --- */
         .admin-only { display: none; }
-        .admin-view .admin-only { display: table-cell; } /* Use table-cell for table context */
+        .admin-view .admin-only { display: table-cell; }
         .admin-view .admin-only-grid { display: grid; }
         
         /* Default (View) Mode: fields look like static text */
@@ -51,7 +49,7 @@
             pointer-events: none;
             background-color: transparent;
             border: 1px solid transparent;
-            color: #d1d5db; /* text-gray-300 */
+            color: #d1d5db;
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
@@ -75,8 +73,8 @@
         }
 
         .loader {
-            border: 4px solid #374151; /* gray-700 */
-            border-top: 4px solid #3b82f6; /* blue-500 */
+            border: 4px solid #374151;
+            border-top: 4px solid #3b82f6;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -164,24 +162,25 @@
     <script type="module">
         // --- SCRIPT PRINCIPAL DA APLICAÇÃO (FIREBASE) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Suas chaves de configuração do Firebase
         const firebaseConfig = {
-  apiKey: "AIzaSyCizCppRETIG-TW8mZiRc26rzVZJ1W2xpQ",
-  authDomain: "shekinah-475dd.firebaseapp.com",
-  projectId: "shekinah-475dd",
-  storageBucket: "shekinah-475dd.firebasestorage.app",
-  messagingSenderId: "825328592286",
-  appId: "1:825328592286:web:f00ac748649aa1247ba28f",
-  measurementId: "G-GMDFXH0082"
-};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'escala-shekinah-default';
+            apiKey: "AIzaSyCizCppRETIG-TW8mZiRc26rzVZJ1W2xpQ",
+            authDomain: "shekinah-475dd.firebaseapp.com",
+            projectId: "shekinah-475dd",
+            storageBucket: "shekinah-475dd.appspot.com",
+            messagingSenderId: "825328592286",
+            appId: "1:825328592286:web:f00ac748649aa1247ba28f"
+        };
 
+        // Inicialização do Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
+        // Elementos do DOM
         const body = document.body;
         const scheduleTableBody = document.getElementById('schedule-table-body');
         const membersListContainer = document.getElementById('members-list-container');
@@ -191,6 +190,7 @@
         const closeModalBtn = document.getElementById('close-modal-btn');
         const modalBody = document.getElementById('modal-body');
 
+        // Estado da aplicação
         let isAdminMode = false;
         let members = {};
         let scheduleData = {};
@@ -209,12 +209,12 @@
         function getAugust2025Dates() {
             const dates = [];
             const year = 2025;
-            const month = 7;
+            const month = 7; // 0-indexed: 7 is August
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                const dayOfWeek = date.getDay();
+                const dayOfWeek = date.getDay(); // 0=Sun, 3=Wed, 6=Sat
                 if (dayOfWeek === 0 || dayOfWeek === 3 || dayOfWeek === 6) {
                     dates.push({
                         iso: date.toISOString().split('T')[0],
@@ -320,7 +320,7 @@
             if (!isAdminMode) return;
             const { date, role } = event.target.dataset;
             const value = event.target.value;
-            const docRef = doc(db, `artifacts/${appId}/public/data/louvor-escala`, date);
+            const docRef = doc(db, "escala", date);
             try {
                 await setDoc(docRef, { [role]: value }, { merge: true });
             } catch (error) {
@@ -333,13 +333,13 @@
             const input = document.getElementById(`input-${role}`);
             const name = input.value.trim();
             if (!name) return;
-            const docRef = doc(db, `artifacts/${appId}/public/data/louvor-membros`, 'allMembers');
+            const docRef = doc(db, "membros", "todos");
             try {
                 await updateDoc(docRef, { [role]: arrayUnion(name) });
                 input.value = '';
             } catch (error) {
                 if (error.code === 'not-found') {
-                    await setDoc(docRef, { [role]: [name] });
+                    await setDoc(docRef, { [role]: [name] }, { merge: true });
                 } else {
                     console.error("Erro ao adicionar membro: ", error);
                 }
@@ -348,7 +348,7 @@
 
         async function handleRemoveMember(event) {
             const { role, name } = event.currentTarget.dataset;
-            const docRef = doc(db, `artifacts/${appId}/public/data/louvor-membros`, 'allMembers');
+            const docRef = doc(db, "membros", "todos");
             try {
                 await updateDoc(docRef, { [role]: arrayRemove(name) });
             } catch (error) {
@@ -375,11 +375,20 @@
 
             const prompt = `Sugira uma lista de 5 músicas de adoração em português para um culto de ${cultoType}. Inclua o nome da música e o artista. Formate como uma lista com marcadores (bullets).`;
             
+            // ***************************************************************
+            // IMPORTANTE: Adicione sua chave da API do Google AI Studio aqui.
+            // ***************************************************************
+            const apiKey = AIzaSyCqVJzuCZcra9PwLjqaIh0fY-OzWmdlfnY;
+            
+            if (apiKey === AIzaSyCqVJzuCZcra9PwLjqaIh0fY-OzWmdlfnY) {
+                 modalBody.innerHTML = `<p class="text-yellow-400 text-center">A chave da API do Gemini não foi configurada.</p>`;
+                 return;
+            }
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
             try {
-                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-                const payload = { contents: chatHistory };
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
                 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
@@ -427,14 +436,16 @@
 
             onAuthStateChanged(auth, user => {
                 if (user) {
-                    const membersDocRef = doc(db, `artifacts/${appId}/public/data/louvor-membros`, 'allMembers');
+                    // Listener para membros
+                    const membersDocRef = doc(db, "membros", "todos");
                     onSnapshot(membersDocRef, (docSnap) => {
                         members = docSnap.exists() ? docSnap.data() : {};
                         renderMembers();
                         renderSchedule();
                     });
 
-                    const scheduleCollectionRef = collection(db, `artifacts/${appId}/public/data/louvor-escala`);
+                    // Listener para escala
+                    const scheduleCollectionRef = collection(db, "escala");
                     onSnapshot(scheduleCollectionRef, (querySnapshot) => {
                         scheduleData = {};
                         querySnapshot.forEach((doc) => {
@@ -447,11 +458,7 @@
             });
 
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
             } catch (error) {
                 console.error("Falha na autenticação:", error);
                 loadingOverlay.innerHTML = '<p class="text-red-500">Não foi possível conectar.</p>';
@@ -476,20 +483,17 @@
             constructor() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2.5 + 1; // Slightly larger particles
-                this.speedX = (Math.random() * 2 - 1) * 0.5; // Slower movement
+                this.size = Math.random() * 2.5 + 1;
+                this.speedX = (Math.random() * 2 - 1) * 0.5;
                 this.speedY = (Math.random() * 2 - 1) * 0.5;
-                // Brighter color for more contrast
-                this.color = `rgba(147, 197, 253, ${Math.random() * 0.6 + 0.1})`; // light blue (blue-300)
+                this.color = `rgba(147, 197, 253, ${Math.random() * 0.6 + 0.1})`;
             }
 
             update() {
                 this.x += this.speedX;
                 this.y += this.speedY;
 
-                // Reset particle when it goes off screen
                 if (this.x < -this.size || this.x > canvas.width + this.size || this.y < -this.size || this.y > canvas.height + this.size) {
-                    // Re-randomize properties for a more dynamic effect
                     this.x = Math.random() * canvas.width;
                     this.y = Math.random() * canvas.height;
                     this.size = Math.random() * 2.5 + 1;
@@ -500,7 +504,7 @@
 
             draw() {
                 ctx.fillStyle = this.color;
-                ctx.filter = 'blur(1px)'; // Add a blur effect for a softer look
+                ctx.filter = 'blur(1px)';
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -509,7 +513,7 @@
 
         function initParticles() {
             particles = [];
-            const numberOfParticles = canvas.width / 12; // Increased density
+            const numberOfParticles = canvas.width / 12;
             for (let i = 0; i < numberOfParticles; i++) {
                 particles.push(new Particle());
             }
@@ -529,7 +533,6 @@
             initParticles();
         });
 
-        // Initial setup
         resizeCanvas();
         initParticles();
         animate();
