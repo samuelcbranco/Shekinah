@@ -167,7 +167,15 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO_KEY", authDomain: "DEMO.firebaseapp.com", projectId: "DEMO" };
+        const firebaseConfig = {
+  apiKey: "AIzaSyCizCppRETIG-TW8mZiRc26rzVZJ1W2xpQ",
+  authDomain: "shekinah-475dd.firebaseapp.com",
+  projectId: "shekinah-475dd",
+  storageBucket: "shekinah-475dd.firebasestorage.app",
+  messagingSenderId: "825328592286",
+  appId: "1:825328592286:web:f00ac748649aa1247ba28f",
+  measurementId: "G-GMDFXH0082"
+};
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'escala-shekinah-default';
 
         const app = initializeApp(firebaseConfig);
