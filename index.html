@@ -162,11 +162,11 @@
     <script type="module">
         // --- SCRIPT PRINCIPAL DA APLICAÇÃO (FIREBASE) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Suas chaves de configuração do Firebase
-        const firebaseConfig = {
+        // Lógica de configuração robusta do Firebase
+        const userProvidedConfig = {
             apiKey: "AIzaSyCizCppRETIG-TW8mZiRc26rzVZJ1W2xpQ",
             authDomain: "shekinah-475dd.firebaseapp.com",
             projectId: "shekinah-475dd",
@@ -174,6 +174,8 @@
             messagingSenderId: "825328592286",
             appId: "1:825328592286:web:f00ac748649aa1247ba28f"
         };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'escala-shekinah-default';
 
         // Inicialização do Firebase
         const app = initializeApp(firebaseConfig);
@@ -320,7 +322,7 @@
             if (!isAdminMode) return;
             const { date, role } = event.target.dataset;
             const value = event.target.value;
-            const docRef = doc(db, "escala", date);
+            const docRef = doc(db, `artifacts/${appId}/public/data/escala`, date);
             try {
                 await setDoc(docRef, { [role]: value }, { merge: true });
             } catch (error) {
@@ -333,7 +335,7 @@
             const input = document.getElementById(`input-${role}`);
             const name = input.value.trim();
             if (!name) return;
-            const docRef = doc(db, "membros", "todos");
+            const docRef = doc(db, `artifacts/${appId}/public/data/membros`, "todos");
             try {
                 await updateDoc(docRef, { [role]: arrayUnion(name) });
                 input.value = '';
@@ -348,7 +350,7 @@
 
         async function handleRemoveMember(event) {
             const { role, name } = event.currentTarget.dataset;
-            const docRef = doc(db, "membros", "todos");
+            const docRef = doc(db, `artifacts/${appId}/public/data/membros`, "todos");
             try {
                 await updateDoc(docRef, { [role]: arrayRemove(name) });
             } catch (error) {
@@ -375,12 +377,9 @@
 
             const prompt = `Sugira uma lista de 5 músicas de adoração em português para um culto de ${cultoType}. Inclua o nome da música e o artista. Formate como uma lista com marcadores (bullets).`;
             
-            // ***************************************************************
-            // IMPORTANTE: Adicione sua chave da API do Google AI Studio aqui.
-            // ***************************************************************
-            const apiKey = AIzaSyCqVJzuCZcra9PwLjqaIh0fY-OzWmdlfnY;
+            const apiKey = "AIzaSyCizCppRETIG-TW8mZiRc26rzVZJ1W2xpQ";
             
-            if (apiKey === AIzaSyCqVJzuCZcra9PwLjqaIh0fY-OzWmdlfnY) {
+            if (!apiKey) {
                  modalBody.innerHTML = `<p class="text-yellow-400 text-center">A chave da API do Gemini não foi configurada.</p>`;
                  return;
             }
@@ -437,7 +436,7 @@
             onAuthStateChanged(auth, user => {
                 if (user) {
                     // Listener para membros
-                    const membersDocRef = doc(db, "membros", "todos");
+                    const membersDocRef = doc(db, `artifacts/${appId}/public/data/membros`, "todos");
                     onSnapshot(membersDocRef, (docSnap) => {
                         members = docSnap.exists() ? docSnap.data() : {};
                         renderMembers();
@@ -445,7 +444,7 @@
                     });
 
                     // Listener para escala
-                    const scheduleCollectionRef = collection(db, "escala");
+                    const scheduleCollectionRef = collection(db, `artifacts/${appId}/public/data/escala`);
                     onSnapshot(scheduleCollectionRef, (querySnapshot) => {
                         scheduleData = {};
                         querySnapshot.forEach((doc) => {
@@ -458,7 +457,11 @@
             });
 
             try {
-                await signInAnonymously(auth);
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
             } catch (error) {
                 console.error("Falha na autenticação:", error);
                 loadingOverlay.innerHTML = '<p class="text-red-500">Não foi possível conectar.</p>';
