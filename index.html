@@ -103,7 +103,7 @@
     </div>
 
     <div class="container mx-auto p-4 sm:p-6 lg:p-8 relative z-10">
-        <header class="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left mb-12 gap-4">
+        <header class="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left mb-8 gap-4">
             <div>
                 <h1 class="text-4xl md:text-5xl neon-title">Escala Min. Shekinah</h1>
                 <p class="text-lg text-gray-400 mt-2">Agosto 2025</p>
@@ -112,24 +112,32 @@
                 Ativar Modo Admin
             </button>
         </header>
+        
+        <!-- Seletor de Visualização Mobile -->
+        <div class="mb-4 md:hidden flex justify-center">
+            <div class="bg-gray-700 p-1 rounded-lg flex space-x-1 text-sm">
+                <button id="view-cards-btn" class="px-4 py-1 rounded-md bg-indigo-600 text-white">Cartões</button>
+                <button id="view-table-btn" class="px-4 py-1 rounded-md text-gray-300">Tabela</button>
+            </div>
+        </div>
 
-        <!-- Tabela Desktop -->
-        <div class="hidden md:block bg-gray-800/70 backdrop-blur-sm shadow-2xl rounded-xl overflow-hidden ring-1 ring-white/10">
+        <!-- Tabela Desktop / Mobile (Opcional) -->
+        <div id="schedule-table-container" class="bg-gray-800/70 backdrop-blur-sm shadow-2xl rounded-xl overflow-hidden ring-1 ring-white/10">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-700">
                     <thead class="bg-gray-900/50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Data</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Dia</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Líder</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Culto</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Violão</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Baixo</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Guitarra</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Teclado</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Bateria</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vocais</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider admin-only">Ações</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Data</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Dia</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Líder</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Culto</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Violão</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Baixo</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Guitarra</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Teclado</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Bateria</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vocais</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider admin-only">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="schedule-table-body" class="divide-y divide-gray-700">
@@ -140,7 +148,7 @@
         </div>
 
         <!-- Lista de Cartões Mobile -->
-        <div id="schedule-card-list" class="block md:hidden space-y-4">
+        <div id="schedule-card-list" class="space-y-4">
             <!-- Cartões mobile inseridos aqui -->
         </div>
 
@@ -229,6 +237,7 @@
 
         // Elementos do DOM
         const body = document.body;
+        const scheduleTableContainer = document.getElementById('schedule-table-container');
         const scheduleTableBody = document.getElementById('schedule-table-body');
         const scheduleCardList = document.getElementById('schedule-card-list');
         const membersListContainer = document.getElementById('members-list-container');
@@ -242,6 +251,8 @@
         const suggestionLoader = document.getElementById('suggestion-loader');
         const suggestionFeedback = document.getElementById('suggestion-feedback');
         const approvedSuggestionsList = document.getElementById('approved-suggestions-list');
+        const viewCardsBtn = document.getElementById('view-cards-btn');
+        const viewTableBtn = document.getElementById('view-table-btn');
 
         // Estado da aplicação
         let isAdminMode = false;
@@ -289,8 +300,8 @@
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-700/50 transition-colors duration-200';
                 let tableCells = `
-                    <td class="px-6 py-4 text-sm font-medium text-white">${dateInfo.display}</td>
-                    <td class="px-6 py-4 text-sm text-gray-400">${dateInfo.weekday}</td>
+                    <td class="px-3 sm:px-6 py-4 text-xs sm:text-sm font-medium text-white">${dateInfo.display}</td>
+                    <td class="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-400">${dateInfo.weekday}</td>
                 `;
                 
                 // --- Renderização dos Cartões (Mobile) ---
@@ -319,18 +330,18 @@
                     if (roleKey === 'vocal') {
                         const inputHTML = `<input type="text" id="${selectId}-table" data-date="${dateInfo.iso}" data-role="${roleKey}" value="${currentSelection}" class="w-full p-2 rounded-md shadow-sm text-sm" placeholder="--">`;
                         const cardInputHTML = `<input type="text" id="${selectId}-card" data-date="${dateInfo.iso}" data-role="${roleKey}" value="${currentSelection}" class="w-full p-2 rounded-md shadow-sm text-sm" placeholder="--">`;
-                        tableCells += `<td class="px-6 py-4 text-sm break-words">${inputHTML}</td>`;
+                        tableCells += `<td class="px-3 sm:px-6 py-4 text-xs sm:text-sm break-words">${inputHTML}</td>`;
                         cardContent += `<div class="col-span-2"><label class="font-semibold text-gray-400 text-xs uppercase">${roles[roleKey]}</label>${cardInputHTML}</div>`;
                     } else {
                         const selectHTML = `<select id="${selectId}-table" data-date="${dateInfo.iso}" data-role="${roleKey}" class="w-full p-2 rounded-md shadow-sm text-sm"><option value="">--</option>${optionsHTML}</select>`;
                         const cardSelectHTML = `<select id="${selectId}-card" data-date="${dateInfo.iso}" data-role="${roleKey}" class="w-full p-2 rounded-md shadow-sm text-sm"><option value="">--</option>${optionsHTML}</select>`;
-                        tableCells += `<td class="px-6 py-4 text-sm break-words">${selectHTML}</td>`;
+                        tableCells += `<td class="px-3 sm:px-6 py-4 text-xs sm:text-sm break-words">${selectHTML}</td>`;
                         cardContent += `<div><label class="font-semibold text-gray-400 text-xs uppercase">${roles[roleKey]}</label>${cardSelectHTML}</div>`;
                     }
                 });
                 
                 tableCells += `
-                    <td class="px-6 py-4 text-sm admin-only text-center">
+                    <td class="px-3 sm:px-6 py-4 text-sm admin-only text-center">
                         <button data-date="${dateInfo.iso}" class="suggest-songs-btn bg-indigo-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-indigo-400 transition">
                             Sugerir ✨
                         </button>
@@ -472,7 +483,7 @@
 
             const prompt = `Sugira uma lista de 5 músicas de adoração em português para um culto de ${cultoType}. Inclua o nome da música e o artista. Formate como uma lista com marcadores (bullets).`;
             
-            const apiKey = "AIzaSyCizCppRETIG-TW8mZiRc26rzVZJ1W2xpQ";
+            const apiKey = "AIzaSyD1od5Haj2qijR2AH9w--bS3rRklpFWuWw";
             
             if (!apiKey || apiKey === "COLE_SUA_CHAVE_GEMINI_API_AQUI") {
                  modalBody.innerHTML = `<p class="text-yellow-400 text-center">A chave da API do Gemini não foi configurada.</p>`;
@@ -526,7 +537,7 @@
 
             const prompt = `Analise a música "${title}" do artista "${artist}". A letra é biblicamente correta, cristocêntrica e alinhada com a teologia Batista Reformada? A letra exalta a Deus e evita teologia da prosperidade ou temas de coaching/autoajuda? Responda APENAS com um objeto JSON com o formato: {"aprovado": boolean, "motivo": "explique aqui o motivo da aprovação ou da rejeição de forma clara e pastoral."}`;
 
-            const apiKey = "AIzaSyCizCppRETIG-TW8mZiRc26rzVZJ1W2xpQ";
+            const apiKey = "AIzaSyD1od5Haj2qijR2AH9w--bS3rRklpFWuWw";
             if (!apiKey || apiKey === "COLE_SUA_CHAVE_GEMINI_API_AQUI") {
                 suggestionFeedback.textContent = "A funcionalidade de sugestão não está configurada.";
                 suggestionFeedback.className = "mt-4 text-sm text-center text-red-400";
@@ -595,6 +606,31 @@
             songSuggestionModal.querySelector('.modal-content').style.transform = 'scale(0.95)';
             setTimeout(() => songSuggestionModal.classList.add('hidden'), 250);
         }
+        
+        function setupMobileViewToggle() {
+            const isMobile = window.innerWidth < 768;
+            if (isMobile) {
+                scheduleTableContainer.classList.add('hidden');
+                scheduleCardList.classList.remove('hidden');
+            } else {
+                scheduleTableContainer.classList.remove('hidden');
+                scheduleCardList.classList.add('hidden');
+            }
+
+            viewCardsBtn.addEventListener('click', () => {
+                scheduleCardList.classList.remove('hidden');
+                scheduleTableContainer.classList.add('hidden');
+                viewCardsBtn.classList.add('bg-indigo-600', 'text-white');
+                viewTableBtn.classList.remove('bg-indigo-600', 'text-white');
+            });
+
+            viewTableBtn.addEventListener('click', () => {
+                scheduleCardList.classList.add('hidden');
+                scheduleTableContainer.classList.remove('hidden');
+                viewTableBtn.classList.add('bg-indigo-600', 'text-white');
+                viewCardsBtn.classList.remove('bg-indigo-600', 'text-white');
+            });
+        }
 
         async function initialize() {
             adminToggleBtn.addEventListener('click', toggleAdminMode);
@@ -603,6 +639,7 @@
                 if (e.target === songSuggestionModal) closeModal();
             });
             submitSuggestionBtn.addEventListener('click', handleSongSuggestionSubmit);
+            setupMobileViewToggle();
 
             onAuthStateChanged(auth, user => {
                 if (user) {
