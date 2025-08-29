@@ -114,7 +114,7 @@
         <header class="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left mb-8 gap-4">
             <div>
                 <h1 class="text-4xl md:text-5xl neon-title">Escala Min. Shekinah</h1>
-                <p class="text-lg text-gray-400 mt-2">Agosto 2025</p>
+                <p class="text-lg text-gray-400 mt-2">Setembro 2025</p>
             </div>
             <div class="flex items-center gap-4">
                  <p id="user-email-display" class="text-sm text-gray-400"></p>
@@ -288,10 +288,10 @@
             vocal: 'Vocais'
         };
 
-        function getAugust2025Dates() {
+        function getSeptember2025Dates() {
             const dates = [];
             const year = 2025;
-            const month = 7; // 0-indexed: 7 is August
+            const month = 8; // 0-indexed: 7 is August
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
             for (let day = 1; day <= daysInMonth; day++) {
@@ -309,7 +309,7 @@
         }
 
         function renderSchedule() {
-            const dates = getAugust2025Dates();
+            const dates = getSeptember2025Dates();
             scheduleTableBody.innerHTML = '';
             scheduleCardList.innerHTML = '';
 
@@ -733,3 +733,4 @@
     </script>
 </body>
 </html>
+
