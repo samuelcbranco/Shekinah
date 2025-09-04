@@ -114,12 +114,16 @@
         <header class="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left mb-8 gap-4">
             <div>
                 <h1 class="text-4xl md:text-5xl neon-title">Escala Min. Shekinah</h1>
-                <p class="text-lg text-gray-400 mt-2">Setembro 2025</p>
+                <div class="flex items-center justify-center sm:justify-start mt-2 space-x-2">
+                    <button id="prev-month-btn" class="text-gray-400 hover:text-white transition-colors">&lt;</button>
+                    <p id="month-display" class="text-lg text-gray-400">Setembro 2025</p>
+                    <button id="next-month-btn" class="text-gray-400 hover:text-white transition-colors">&gt;</button>
+                </div>
             </div>
             <div class="flex items-center gap-4">
-                 <p id="user-email-display" class="text-sm text-gray-400"></p>
-                 <button id="logout-btn" class="shrink-0 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-red-700 transition-colors text-sm font-semibold">Sair</button>
-                 <button id="admin-toggle-btn" class="hidden shrink-0 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors text-sm font-semibold">
+                <p id="user-email-display" class="text-sm text-gray-400"></p>
+                <button id="logout-btn" class="shrink-0 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-red-700 transition-colors text-sm font-semibold">Sair</button>
+                <button id="admin-toggle-btn" class="hidden shrink-0 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors text-sm font-semibold">
                     Ativar Modo Admin
                 </button>
             </div>
@@ -159,7 +163,7 @@
         </div>
 
         <!-- Lista de Cartões Mobile -->
-        <div id="schedule-card-list" class="space-y-4">
+        <div id="schedule-card-list" class="space-y-4 hidden">
             <!-- Cartões mobile inseridos aqui -->
         </div>
 
@@ -180,7 +184,7 @@
                         <span id="suggestion-btn-text">Enviar Sugestão</span>
                     </button>
                 </div>
-                 <div id="suggestion-feedback" class="mt-4 text-sm text-center"></div>
+                <div id="suggestion-feedback" class="mt-4 text-sm text-center"></div>
             </div>
         </div>
 
@@ -206,7 +210,7 @@
         <div class="modal-content bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-8 transform scale-100">
             <h2 id="login-modal-title" class="text-2xl font-bold text-center mb-6 text-white">Bem vindo ao App do Shekinah</h2>
             <div class="space-y-4">
-                 <div>
+                <div>
                     <label for="login-email" class="block text-sm font-medium text-gray-300">Email</label>
                     <input type="email" id="login-email" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm p-2 text-white focus:ring-blue-500 focus:border-blue-500 pointer-events-auto">
                 </div>
@@ -229,7 +233,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, arrayRemove, collection, addDoc, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+        
         // Lógica de configuração robusta do Firebase
         const userProvidedConfig = {
             apiKey: "AIzaSyCizCppRETIG-TW8mZiRc26rzVZJ1W2xpQ",
@@ -269,6 +273,9 @@
         const logoutBtn = document.getElementById('logout-btn');
         const userEmailDisplay = document.getElementById('user-email-display');
         const authFeedback = document.getElementById('auth-feedback');
+        const monthDisplay = document.getElementById('month-display');
+        const prevMonthBtn = document.getElementById('prev-month-btn');
+        const nextMonthBtn = document.getElementById('next-month-btn');
         
         // Estado da aplicação
         let isCreateAccountMode = false;
@@ -276,6 +283,12 @@
         let members = {};
         let scheduleData = {};
         let suggestionsUnsubscribe = null; // Para desligar o listener de sugestões ao sair
+        
+        const scheduleMonths = [
+            { name: 'Setembro', value: 8, year: 2025 },
+            { name: 'Outubro', value: 9, year: 2025 }
+        ];
+        let currentMonthIndex = 0; // Setembro
 
         const roles = {
             lider: 'Líder da Equipa',
@@ -288,16 +301,14 @@
             vocal: 'Vocais'
         };
 
-        function getSeptember2025Dates() {
+        function getScheduleDates(monthIndex, year) {
             const dates = [];
-            const year = 2025;
-            const month = 8; // 0-indexed: 7 is August
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
             const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
             for (let day = 1; day <= daysInMonth; day++) {
-                const date = new Date(year, month, day);
-                const dayOfWeek = date.getDay(); // 0=Sun, 3=Wed, 6=Sat
-                if (dayOfWeek === 0 || dayOfWeek === 3 || dayOfWeek === 6) {
+                const date = new Date(year, monthIndex, day);
+                const dayOfWeek = date.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 3 || dayOfWeek === 6) { // Domingo, Quarta, Sábado
                     dates.push({
                         iso: date.toISOString().split('T')[0],
                         display: date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
@@ -308,10 +319,11 @@
             return dates;
         }
 
-        function renderSchedule() {
-            const dates = getSeptember2025Dates();
+        function renderSchedule(month) {
+            const dates = getScheduleDates(month.value, month.year);
             scheduleTableBody.innerHTML = '';
             scheduleCardList.innerHTML = '';
+            monthDisplay.textContent = `${month.name} ${month.year}`;
 
             dates.forEach(dateInfo => {
                 const row = document.createElement('tr');
@@ -506,8 +518,8 @@
                 return;
             }
             if (!currentUser) {
-                 suggestionFeedback.textContent = "Você precisa estar logado para enviar uma sugestão.";
-                 return;
+                suggestionFeedback.textContent = "Você precisa estar logado para enviar uma sugestão.";
+                return;
             }
 
             submitSuggestionBtn.disabled = true;
@@ -573,11 +585,23 @@
                 toggleAuthModeBtn.textContent = "Criar Conta";
             }
         }
+        
+        function updateMonthView(increment) {
+            currentMonthIndex += increment;
+            if (currentMonthIndex < 0) {
+                currentMonthIndex = 0;
+            } else if (currentMonthIndex >= scheduleMonths.length) {
+                currentMonthIndex = scheduleMonths.length - 1;
+            }
+            renderSchedule(scheduleMonths[currentMonthIndex]);
+        }
 
         async function initialize() {
             adminToggleBtn.addEventListener('click', toggleAdminMode);
             submitSuggestionBtn.addEventListener('click', handleSongSuggestionSubmit);
             setupMobileViewToggle();
+            prevMonthBtn.addEventListener('click', () => updateMonthView(-1));
+            nextMonthBtn.addEventListener('click', () => updateMonthView(1));
 
             onAuthStateChanged(auth, user => {
                 loadingOverlay.classList.add('hidden');
@@ -603,7 +627,7 @@
                     onSnapshot(membersDocRef, (docSnap) => {
                         members = docSnap.exists() ? docSnap.data() : {};
                         renderMembers();
-                        renderSchedule();
+                        renderSchedule(scheduleMonths[currentMonthIndex]);
                     });
 
                     const scheduleCollectionRef = collection(db, `artifacts/${appId}/public/data/escala`);
@@ -612,7 +636,7 @@
                         querySnapshot.forEach((doc) => {
                             scheduleData[doc.id] = doc.data();
                         });
-                        renderSchedule();
+                        renderSchedule(scheduleMonths[currentMonthIndex]);
                     });
                 } else {
                     mainContent.classList.add('hidden');
@@ -633,8 +657,8 @@
                 try {
                     if (isCreateAccountMode) {
                         if (email.toLowerCase() === ADMIN_EMAIL && password !== "samuka123") {
-                             authFeedback.textContent = "Senha incorreta para criar a conta de administrador.";
-                             return;
+                            authFeedback.textContent = "Senha incorreta para criar a conta de administrador.";
+                            return;
                         }
                         await createUserWithEmailAndPassword(auth, email, password);
                     } else {
@@ -733,4 +757,3 @@
     </script>
 </body>
 </html>
-
